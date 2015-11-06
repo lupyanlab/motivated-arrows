@@ -1,12 +1,17 @@
 from UserDict import UserDict
 from UserList import UserList
 
+from psychopy import visual, core, event
+
+from labtools import get_subj_info
+
 
 class Participant(UserDict):
 	@classmethod
-	def from_gui(gui_yaml):
+	def from_gui(cls, gui_yaml):
 		""" Pull up a dialogue to get subject info. """
-		pass
+		participant_data = get_subj_info(gui_yaml)
+		return cls(**participant_data)
 
 	def write_trial_data(self, trial_data):
 		""" Write the dictionary of data to a file in the correct order. """
@@ -33,16 +38,39 @@ class TrialList(UserList):
 
 
 class Experiment(object):
-	pass
+	def __init__(self, settings_yaml):
+		with open(settings_yaml, 'r') as f:
+			self.settings = yaml.load(f)
 
-if __name__ == '__main__':
+		self.win = visual.Window(fullscr=True, units='pix')
+
+	@property
+	def fields(self):
+		return sorted(self.settings.keys())
+
+	def show_instructions(self):
+		pass
+
+	def run_trial(self, trial):
+		trial.update(self.settings)
+		return trial
+
+
+def main():
 	participant = Participant.from_gui('gui.yaml')
 	trials = TrialList.from_kwargs(**participant)
-	experiment = Experiment()
+	experiment = Experiment('settings.yaml')
+
+	header = participant.fields + experiment.fields + trials.fields
+	participant.write_header(header)
 
 	experiment.show_instructions()
-	
+
 	for block in trials.iterblocks():
 		for trial in block:
 			trial_data = experiment.run_trial(trial)
 			participant.write_trial_data(trial_data)
+
+
+if __name__ == '__main__':
+	main()
