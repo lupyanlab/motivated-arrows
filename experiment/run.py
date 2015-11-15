@@ -79,8 +79,10 @@ class Experiment(object):
 
         self.win = visual.Window(fullscr=True, units='pix')
 
-        self.fix = visual.TextStim(self.win, font='Consolas', color='black',
-                                   height=30)
+        text_kwargs = dict(win=self.win, font='Consolas', color='black',
+                           height=30)
+        self.fix = visual.TextStim(text='+', **text_kwargs)
+        self.prompt = visual.TextStim(text='?', **text_kwargs)
 
         self.target = visual.Circle(self.win, radius=10, fillColor='black')
 
@@ -93,7 +95,7 @@ class Experiment(object):
         self.word = visual.TextStim(self.win, font='Consolas', color='black')
 
         gutter = layout['left_right_gutter']/2
-        frame_positions = dict(left=-gutter, right=gutter)
+        frame_positions = dict(left=(-gutter, 0), right=(gutter, 0))
         frame_kwargs = dict(
             win=self.win,
             width=layout['frame_size'],
@@ -109,6 +111,8 @@ class Experiment(object):
         self.feedback = {}
         self.feedback[0] = sound.Sound(unipath.Path(feedback_dir, 'buzz.wav'))
         self.feedback[1] = sound.Sound(unipath.Path(feedback_dir, 'bleep.wav'))
+
+        self.timer = core.Clock()
 
     def run_trial(self, trial):
         if trial['cue_type'] == 'arrow':
@@ -242,7 +246,7 @@ if __name__ == '__main__':
             correct_response='left',
         )
         experiment = Experiment('settings.yaml', 'texts.yaml')
-        trial_data = experiment.run_trial()
+        trial_data = experiment.run_trial(trial)
 
         import pprint
         pprint.pprint(trial_data)

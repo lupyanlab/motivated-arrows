@@ -8,6 +8,6 @@ waits:
   target_duration: 0.1
   response_window: 1.5
   iti: 1.0
-response_map:
+response_keys:
   left: left
   right: right
