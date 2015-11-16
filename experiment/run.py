@@ -231,13 +231,13 @@ def main():
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('command', choices=['run', 'trials', 'test'],
-                        nargs='?', default='run')
+    parser.add_argument('command', choices=['main', 'maketrials', 'singletrial'],
+                        nargs='?', default='main')
 
     args = parser.parse_args()
-    if args.command == 'trials':
+    if args.command == 'maketrials':
         pass
-    elif args.command == 'test':
+    elif args.command == 'singletrial':
         trial = dict(
             cue_type='arrow',
             cue_validity='valid',
