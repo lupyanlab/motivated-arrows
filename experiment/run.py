@@ -3,13 +3,14 @@ from UserDict import UserDict
 from UserList import UserList
 
 import unipath
-# import pandas
-# from numpy.random import random
+import pandas
+from numpy import random
 import yaml
 
 from psychopy import visual, core, event, sound
 
 from labtools.psychopy_helper import get_subj_info
+from labtools.trials_functions import expand, extend, add_block
 
 
 class Participant(UserDict):
@@ -35,7 +36,7 @@ class Trials(UserList):
         'cue_validity',
         'cue_dir',
         'cue_pos_y',
-        'target_dir',
+        'target_loc',
         'target_pos_x',
         'target_pos_y',
         'correct_response',
@@ -48,7 +49,58 @@ class Trials(UserList):
 
     @classmethod
     def make(cls, **kwargs):
-        pass
+        seed = kwargs.get('seed')
+        prng = random.RandomState(seed)
+        ratio_cue_valid = kwargs.get('ratio_cue_valid', 0.67)
+
+        trials = pandas.DataFrame({'cue_type': ['arrow', 'word']})
+        trials = expand(trials, 'cue_validity', values=['valid', 'invalid'],
+                        ratio=ratio_cue_valid, seed=seed)
+
+        trials = extend(trials, max_length=320)
+        trials['target_loc'] = prng.choice(['left', 'right'], len(trials))
+        trials['correct_response'] = trials['target_loc']
+
+        reverser = dict(left='right', right='left')
+        def pick_cue_dir(trial):
+            cue_validity = trial['cue_validity']
+            target_loc = trial['target_loc']
+            if cue_validity == 'valid':
+                return target_loc
+            elif cue_validity == 'invalid':
+                return reverser[target_loc]
+            else:
+                raise NotImplementedError('cue_validity: %s' % cue_validity)
+        trials['cue_dir'] = trials.apply(pick_cue_dir, axis=1)
+
+        # Position variables determined at runtime
+        for x in ['cue_pos_y', 'target_pos_x', 'target_pos_y']:
+            trials[x] = ''
+
+        trials = add_block(trials, size=60, start=1, seed=seed)
+        trials['block_type'] = 'test'
+
+        # Add practice trials
+        num_practice = 8
+        practice_ix = prng.choice(trials.index, num_practice)
+        practice_trials = trials.ix[practice_ix, ]
+        trials.drop(practice_ix, inplace=True)
+        practice_trials['block'] = 0
+        practice_trials['block_type'] = 'practice'
+        trials = pandas.concat([practice_trials, trials])
+
+        trials['trial'] = range(len(trials))
+
+        # Add blank columns for response variables
+        for x in ['response', 'rt', 'is_correct']:
+            trials[x] = ''
+
+        return cls(trials.to_dict('record'))
+
+    def write(self, trials_csv='sample_trials.csv'):
+        trials = pandas.DataFrame.from_records(self)
+        trials = trials[self.COLUMNS]
+        trials.to_csv(trials_csv, index=False)
 
     def iter_blocks(self, key='block'):
         """ Yield blocks of trials. """
@@ -236,13 +288,14 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     if args.command == 'maketrials':
-        pass
+        trials = Trials.make()
+        trials.write()
     elif args.command == 'singletrial':
         trial = dict(
             cue_type='arrow',
             cue_validity='valid',
             cue_dir='left',
-            target_dir='left',
+            target_loc='left',
             correct_response='left',
         )
         experiment = Experiment('settings.yaml', 'texts.yaml')
