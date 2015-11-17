@@ -1,10 +1,12 @@
 layout:
-  frame_size: 200
-  left_right_gutter: 500
+  frame_size: 400
+  positions:
+    left: [-300.0, 0.0]
+    right: [300.0, 0.0]
 waits:
   fixation_duration: 1.0
-  cue_duration: 0.1
-  cue_onset_to_target_onset: 0.2
+  cue_duration: 0.2
+  cue_onset_to_target_onset: 0.4
   target_duration: 0.1
   response_window: 1.5
   iti: 1.0

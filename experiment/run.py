@@ -166,20 +166,22 @@ class Experiment(object):
 
         self.waits = settings.pop('waits')
         self.response_keys = settings.pop('response_keys')
-        layout = settings.pop('layout')
         self.survey_url = settings.pop('survey_url')
+        layout = settings.pop('layout')
+        self.positions = layout.pop('positions')
 
         with open(texts_yaml, 'r') as f:
             self.texts = yaml.load(f)
 
-        self.win = visual.Window(fullscr=True, units='pix')
+        self.win = visual.Window(fullscr=True, allowGUI=False, units='pix')
 
         text_kwargs = dict(win=self.win, font='Consolas', color='black',
                            height=30)
         self.fix = visual.TextStim(text='+', **text_kwargs)
         self.prompt = visual.TextStim(text='?', **text_kwargs)
 
-        self.target = visual.Circle(self.win, radius=10, fillColor='black')
+        self.target = visual.Circle(self.win, radius=10, fillColor='black',
+                                    lineColor=None, opacity=0.3)
 
         self.arrows = {}
         for direction in ['left', 'right']:
@@ -189,8 +191,6 @@ class Experiment(object):
 
         self.word = visual.TextStim(self.win, font='Consolas', color='black')
 
-        gutter = layout['left_right_gutter']/2
-        frame_positions = dict(left=(-gutter, 0), right=(gutter, 0))
         frame_kwargs = dict(
             win=self.win,
             width=layout['frame_size'],
@@ -199,7 +199,7 @@ class Experiment(object):
         )
         self.frames = []
         for direction in ['left', 'right']:
-            self.frames.append(visual.Rect(pos=frame_positions[direction],
+            self.frames.append(visual.Rect(pos=self.positions[direction],
                                **frame_kwargs))
 
         # 3 seems to be about max of the sampling distribution
@@ -210,8 +210,9 @@ class Experiment(object):
         self.project = project
 
         x_edge = half_frame/6.0
-        def uniform_x():
-            return random.uniform(-x_edge, x_edge)
+        def uniform_x(loc):
+            x_center = self.positions[loc][0]
+            return random.uniform(x_center-x_edge, x_center+x_edge)
         self.uniform_x = uniform_x
 
         feedback_dir = unipath.Path(self.STIM_DIR, 'feedback')
@@ -235,7 +236,7 @@ class Experiment(object):
         # Determine vertical cue location
         trial['cue_pos_y'] = self.project(trial['cue_pos_dy'])
         trial['target_pos_y'] = self.project(trial['target_pos_dy'])
-        trial['target_pos_x'] = self.uniform_x()
+        trial['target_pos_x'] = self.uniform_x(trial['target_loc'])
 
         cue_pos = (0, trial['cue_pos_y'])
         cue.setPos(cue_pos)
