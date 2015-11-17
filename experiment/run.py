@@ -14,15 +14,50 @@ from labtools.trials_functions import expand, extend, add_block
 
 
 class Participant(UserDict):
-    @classmethod
-    def from_gui(cls, gui_yaml):
-        """ Pull up a dialogue to get subject info. """
-        participant_data = get_subj_info(gui_yaml)
-        return cls(**participant_data)
+    """ Store participant data and provide helper functions. """
+    DATA_DIR = 'data'
+    DATA_DELIMITER = ','
 
-    def write_trial_data(self, trial_data):
-        """ Write the dictionary of data to a file in the correct order. """
-        pass
+    def __init__(self, **kwargs):
+        """ Standard dict constructor.
+
+        Saves _order if provided. Raises an AssertionError if _order
+        isn't exhaustive of kwargs.
+        """
+        self._data_file = None
+        self._order = kwargs.pop('_order', kwargs.keys())
+
+        correct_len = len(self._order) == len(kwargs)
+        kwargs_in_order = all([kwg in self._order for kwg in kwargs])
+        assert correct_len & kwargs_in_order, "_order doesn't match kwargs"
+
+        self.data = dict(**kwargs)
+
+    @property
+    def data_file(self):
+        if not unipath.Path(self.DATA_DIR).exists():
+            unipath.Path(self.DATA_DIR).mkdir()
+
+        if not self._data_file:
+            data_file_name = '{subj_id}.csv'.format(**self)
+            self._data_file = unipath.Path(self.DATA_DIR, data_file_name)
+        return self._data_file
+
+    def write_header(self, trial_col_names):
+        """ Writes the names of the columns and saves the order. """
+        self._col_names = self._order + trial_col_names
+        self._write_line(self.DATA_DELIMITER.join(self._col_names))
+
+    def write_trial(self, trial):
+        assert self._col_names, 'write header first to save column order'
+        trial_data = dict(self)
+        trial_data.update(trial)
+        row_data = [str(trial_data[key]) for key in self._col_names]
+        self._write_line(self.DATA_DELIMITER.join(row_data))
+
+    def _write_line(self, row):
+        with open(self.data_file, 'a') as f:
+            f.write(row + '\n')
 
 
 class Trials(UserList):
@@ -170,10 +205,14 @@ class Experiment(object):
         # 3 seems to be about max of the sampling distribution
         half_frame = layout['frame_size']/2
         multiplier = half_frame / 3
-        self.project = lambda y: y * multipler
+        def project(y):
+            return y * multiplier
+        self.project = project
 
         x_edge = half_frame/6.0
-        self.uniform_x = lambda: random.uniform(-x_edge, x_edge)
+        def uniform_x():
+            return random.uniform(-x_edge, x_edge)
+        self.uniform_x = uniform_x
 
         feedback_dir = unipath.Path(self.STIM_DIR, 'feedback')
         self.feedback = {}
@@ -307,7 +346,7 @@ def main():
 
     participant = Participant(**participant_data)
     trials = Trials.make(**participant)
-    last_block = trials[-1]['block']
+    last_block_num = trials[-1]['block']
 
     # Start of experiment
     experiment = Experiment('settings.yaml', 'texts.yaml')
@@ -316,7 +355,7 @@ def main():
     participant.write_header(trials.COLUMNS)
 
     for block in trials.iter_blocks():
-        block = block[0]['block']
+        block_num = block[0]['block']
         block_type = block[0]['block_type']
 
         for trial in block:
@@ -325,7 +364,7 @@ def main():
 
         if block_type == 'practice':
             experiment.show_screen('end_of_practice')
-        elif block != last_block:
+        elif block_num != last_block_num:
             experiment.show_screen('break')
 
     experiment.show_screen('end_of_experiment')
