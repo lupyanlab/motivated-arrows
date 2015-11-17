@@ -132,6 +132,7 @@ class Experiment(object):
         self.waits = settings.pop('waits')
         self.response_keys = settings.pop('response_keys')
         layout = settings.pop('layout')
+        self.survey_url = settings.pop('survey_url')
 
         with open(texts_yaml, 'r') as f:
             self.texts = yaml.load(f)
@@ -306,6 +307,7 @@ def main():
 
     participant = Participant(**participant_data)
     trials = Trials.make(**participant)
+    last_block = trials[-1]['block']
 
     # Start of experiment
     experiment = Experiment('settings.yaml', 'texts.yaml')
@@ -314,6 +316,7 @@ def main():
     participant.write_header(trials.COLUMNS)
 
     for block in trials.iter_blocks():
+        block = block[0]['block']
         block_type = block[0]['block_type']
 
         for trial in block:
@@ -322,7 +325,7 @@ def main():
 
         if block_type == 'practice':
             experiment.show_screen('end_of_practice')
-        else:
+        elif block != last_block:
             experiment.show_screen('break')
 
     experiment.show_screen('end_of_experiment')
@@ -331,7 +334,8 @@ def main():
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    command_choices = ['main', 'maketrials', 'singletrial', 'instructions']
+    command_choices = ['main', 'maketrials', 'singletrial', 'instructions',
+                       'survey']
     parser.add_argument('command', choices=command_choices,
                         nargs='?', default=command_choices[0])
 
@@ -365,5 +369,10 @@ if __name__ == '__main__':
                    'end_of_experiment']
         for name in screens:
             experiment.show_screen(name)
+    elif args.command == 'survey':
+        experiment = Experiment()
+        import webbrowser
+        webbrowser.open(experiment.survey_url.format(subj_id='TESTSUBJ', computer='TESTCOMPUTER'))
+        core.quit()
     else:
         main()
