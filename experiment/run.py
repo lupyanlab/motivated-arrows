@@ -66,7 +66,7 @@ class Trials(UserList):
 class Experiment(object):
     STIM_DIR = 'stimuli'
 
-    def __init__(self, settings_yaml, texts_yaml):
+    def __init__(self, settings_yaml='settings.yaml', texts_yaml='texts.yaml'):
         with open(settings_yaml, 'r') as f:
             settings = yaml.load(f)
 
@@ -193,6 +193,32 @@ class Experiment(object):
 
         return trial
 
+    def show_screen(self, name):
+        if name in in self.texts:
+            self._show_screen(text=self.texts[name])
+        else:
+            raise NotImplementedError('%s is not a valid screen' % name)
+
+    def _show_screen(self, text):
+        visual.TextStim(text=text, **self.screen_text_kwargs).draw()
+        self.win.flip()
+        response = event.waitKeys(keyList=['space', 'q'])[0]
+
+        if response == 'q':
+            core.quit()
+
+    @property
+    def screen_text_kwargs(self):
+        if not hasattr(self, 'screen_text_kwargs'):
+            self._screen_text_kwargs = dict(
+                win=self.win,
+                font='Consolas',
+                color='black',
+                height=30,
+                wrapWidth=800,
+            )
+        return self._screen_text_kwargs
+
 
 def main():
     participant_data = get_subj_info(
@@ -209,7 +235,7 @@ def main():
 
     # Start of experiment
     experiment = Experiment('settings.yaml', 'texts.yaml')
-    experiment.show_instructions()
+    experiment.show_screen('instructions')
 
     participant.write_header(trials.COLUMNS)
 
@@ -221,11 +247,11 @@ def main():
             participant.write_trial(trial_data)
 
         if block_type == 'practice':
-            experiment.show_end_of_practice_screen()
+            experiment.show_screen('end_of_practice')
         else:
-            experiment.show_break_screen()
+            experiment.show_screen('break')
 
-    experiment.show_end_of_experiment_screen()
+    experiment.show_screen('end_of_experiment')
 
 
 if __name__ == '__main__':

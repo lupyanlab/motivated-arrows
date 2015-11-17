@@ -1,0 +1,17 @@
+instructions: >
+  These are the instructions.
+end_of_practice: >
+  You've completed the practice trials.
+break: >
+  You've finished another part of the experiment. Take a short break but please
+  stay in the room. When you are ready to continue, press the SPACEBAR.
+timeout: >
+  You didn't respond fast enough. Take a quick break if you need it. When you
+  are ready to continue, press the SPACEBAR.
+end_of_experiment: >
+  You have finished the experiment. All that's left is a short survey. After
+  you exit this screen by pressing the SPACEBAR, a survey should open in your
+  browser window.
+
+
+  Thank you for making our research possible!
