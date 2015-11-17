@@ -180,8 +180,12 @@ class Experiment(object):
         self.fix = visual.TextStim(text='+', **text_kwargs)
         self.prompt = visual.TextStim(text='?', **text_kwargs)
 
+        word_kwargs = dict(text_kwargs)
+        word_kwargs['height'] = 30
+        self.word = visual.TextStim(**word_kwargs)
+
         self.target = visual.Circle(self.win, radius=10, fillColor='black',
-                                    lineColor=None, opacity=0.3)
+                                    lineColor=None, opacity=0.1)
 
         self.arrows = {}
         for direction in ['left', 'right']:
@@ -189,7 +193,7 @@ class Experiment(object):
                                      'arrow-{}.png'.format(direction))
             self.arrows[direction] = visual.ImageStim(self.win, str(arrow_png))
 
-        self.word = visual.TextStim(self.win, font='Consolas', color='black')
+
 
         frame_kwargs = dict(
             win=self.win,
@@ -247,43 +251,38 @@ class Experiment(object):
         cue_offset_to_target_onset = self.waits['cue_onset_to_target_onset'] -\
             self.waits['cue_duration']
 
+        for frame in self.frames:
+            frame.autoDraw = True
+
         # Begin trial presentation
         # ------------------------
         self.fix.draw()
-        for frame in self.frames:
-            frame.draw()
         self.win.flip()
         core.wait(self.waits['fixation_duration'])
 
         # Present cue
         cue.draw()
-        for frame in self.frames:
-            frame.draw()
         self.win.flip()
         core.wait(self.waits['cue_duration'])
 
         # Delay between cue and target
-        self.fix.draw()
-        for frame in self.frames:
-            frame.draw()
         self.win.flip()
         core.wait(cue_offset_to_target_onset)
 
         # Show target
+        self.timer.reset()
         self.target.draw()
-        self.fix.draw()
-        for frame in self.frames:
-            frame.draw()
         self.win.flip()
         core.wait(self.waits['target_duration'])
 
         # Get response
-        self.timer.reset()
         self.prompt.draw()
         self.win.flip()
         response = event.waitKeys(maxWait=self.waits['response_window'],
                                   keyList=self.response_keys.keys(),
                                   timeStamped=self.timer)
+        for frame in self.frames:
+            frame.autoDraw = False
         self.win.flip()
         # ----------------------
         # End trial presentation
@@ -302,7 +301,8 @@ class Experiment(object):
         trial['rt'] = rt * 1000
         trial['is_correct'] = is_correct
 
-        self.feedback[is_correct].play()
+        if trial['block_type'] == 'practice':
+            self.feedback[is_correct].play()
 
         core.wait(self.waits['iti'])
 

@@ -1,9 +1,9 @@
 layout:
   frame_size: 400
   positions:
-    left: [-300.0, 0.0]
-    right: [300.0, 0.0]
-waits:
+    left: [-350.0, 0.0]
+    right: [350.0, 0.0]
+waits:  # in seconds
   fixation_duration: 1.0
   cue_duration: 0.2
   cue_onset_to_target_onset: 0.4
