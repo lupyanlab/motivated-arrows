@@ -301,15 +301,20 @@ class Experiment(object):
         trial['rt'] = rt * 1000
         trial['is_correct'] = is_correct
 
-        if trial['block_type'] == 'practice':
+        if trial['block_type'] == 'practice' or response == 'timeout':
             self.feedback[is_correct].play()
+
+        if response == 'timeout':
+            self.show_screen('timeout')
 
         core.wait(self.waits['iti'])
 
         return trial
 
     def show_screen(self, name):
-        if name in self.texts:
+        if name == 'instructions':
+            self._show_instructions()
+        elif name in self.texts:
             self._show_screen(text=self.texts[name])
         else:
             raise NotImplementedError('%s is not a valid screen' % name)
@@ -321,6 +326,44 @@ class Experiment(object):
 
         if response == 'q':
             core.quit()
+
+    def _show_instructions(self):
+        instructions = sorted(self.texts['instructions'].items())
+
+        main_kwargs = dict(self.screen_text_kwargs)
+        main_kwargs['height'] = 25
+        main_kwargs['pos'] = (0, 350)
+
+        main = visual.TextStim(**main_kwargs)
+        for num, text in instructions:
+            main.setText(text)
+            main.draw()
+
+            advance_keys = ['space', 'q']
+
+            if num == 1:
+                for frame in self.frames:
+                    frame.draw()
+                self.target.setPos(self.positions['left'])
+                self.target.draw()
+                advance_keys = ['left', 'q']
+            elif num == 2:
+                for frame in self.frames:
+                    frame.draw()
+                self.arrows['left'].draw()
+                self.word.setText('right')
+                self.word.setPos((0, 100))
+                self.word.draw()
+
+            self.win.flip()
+            response = event.waitKeys(keyList=advance_keys)[0]
+
+            if response in ['left', 'right']:
+                self.feedback[1].play()
+
+            if response == 'q':
+                core.quit()
+
 
     @property
     def screen_text_kwargs(self):

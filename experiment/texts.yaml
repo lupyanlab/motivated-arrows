@@ -1,7 +1,24 @@
-instructions: >
-  These are the instructions.
+instructions:
+  1: >
+    Welcome to the experiment! Today we will testing how quickly you can
+    detect a target presented either to the left or the right of where you are
+    looking. You can see an example of the target below. The target is the
+    gray circle, and it will flash in either the left or the right frame. If
+    it appears on the left, press the left arrow key. If it appears on the
+    right, press the right arrow key. Press the arrow key corresponding to the
+    location of the target below.
+  2: >
+    Before the target appears, you will see an arrow or a word in the center,
+    between the frames. Please pay attention to these cues, as they may help
+    you find the target, but occasionally they will mislead you. No matter
+    what cue you see, your task is the same: to identify where you saw the
+    target. Press the SPACEBAR to continue.
+  3: >
+    Are you ready to begin? If you have any questions, ask the experimenter now.
+    When you are ready to begin the practice trials, press the SPACEBAR.
 end_of_practice: >
-  You've completed the practice trials.
+  You've finished the practice trials. Does the experiment make sense? If so,
+  press the SPACEBAR to begin.
 break: >
   You've finished another part of the experiment. Take a short break but please
   stay in the room. When you are ready to continue, press the SPACEBAR.
