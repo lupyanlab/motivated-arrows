@@ -1,6 +1,7 @@
 .DS_Store
 *.pyc
 *.pickle
+*.json
 sample_trials.csv
 .Rproj.user
 .Rhistory
