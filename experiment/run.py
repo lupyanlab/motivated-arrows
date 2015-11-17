@@ -30,17 +30,18 @@ class Trials(UserList):
         'block',
         'block_type',
         'trial',
-
         # Stimuli
         'cue_type',
         'cue_validity',
         'cue_dir',
-        'cue_pos_y',
+        'cue_pos_dy',
         'target_loc',
+        'target_pos_dy',
+        'correct_response',
+        # Determined at runtime
+        'cue_pos_y',
         'target_pos_x',
         'target_pos_y',
-        'correct_response',
-
         # Response columns
         'response',
         'rt',
@@ -73,8 +74,14 @@ class Trials(UserList):
                 raise NotImplementedError('cue_validity: %s' % cue_validity)
         trials['cue_dir'] = trials.apply(pick_cue_dir, axis=1)
 
-        # Position variables determined at runtime
-        for x in ['cue_pos_y', 'target_pos_x', 'target_pos_y']:
+        # Determine cue pos and target pos
+        trials['cue_pos_dy'] = 0.
+        trials['target_pos_dy'] = 0.
+        trials[['cue_pos_dy', 'target_pos_dy']] = prng.multivariate_normal(
+            mean=[0, 0], cov=[[1, 0], [0, 1]], size=len(trials)
+        )
+        # Actual units (pixels) are determined at runtime.
+        for x in ['target_pos_x', 'target_pos_y', 'cue_pos_y']:
             trials[x] = ''
 
         trials = add_block(trials, size=60, start=1, seed=seed)
@@ -159,6 +166,14 @@ class Experiment(object):
             self.frames.append(visual.Rect(pos=frame_positions[direction],
                                **frame_kwargs))
 
+        # 3 seems to be about max of the sampling distribution
+        half_frame = layout['frame_size']/2
+        multiplier = half_frame / 3
+        self.project = lambda y: y * multipler
+
+        x_edge = half_frame/6.0
+        self.uniform_x = lambda: random.uniform(-x_edge, x_edge)
+
         feedback_dir = unipath.Path(self.STIM_DIR, 'feedback')
         self.feedback = {}
         self.feedback[0] = sound.Sound(unipath.Path(feedback_dir, 'buzz.wav'))
@@ -167,18 +182,25 @@ class Experiment(object):
         self.timer = core.Clock()
 
     def run_trial(self, trial):
-        if trial['cue_type'] == 'arrow':
-            cue = self.arrows[trial['cue_dir']]
-        elif trial['cue_type'] == 'word':
+        cue_type = trial['cue_type']
+        cue_dir = trial['cue_dir']
+        if cue_type == 'arrow':
+            cue = self.arrows[cue_dir]
+        elif cue_type == 'word':
             cue = self.word
-            cue.setText(trial['cue_dir'])
+            cue.setText(cue_dir)
         else:
-            raise NotImplementedError
+            raise NotImplementedError('cue_type: %s' % cue_type)
 
-        cue_pos = (0, 0)
+        # Determine vertical cue location
+        trial['cue_pos_y'] = self.project(trial['cue_pos_dy'])
+        trial['target_pos_y'] = self.project(trial['target_pos_dy'])
+        trial['target_pos_x'] = self.uniform_x()
+
+        cue_pos = (0, trial['cue_pos_y'])
         cue.setPos(cue_pos)
 
-        target_pos = (0, 0)
+        target_pos = (trial['target_pos_x'], trial['target_pos_y'])
         self.target.setPos(target_pos)
 
         cue_offset_to_target_onset = self.waits['cue_onset_to_target_onset'] -\
@@ -285,6 +307,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('command', choices=['main', 'maketrials', 'singletrial'],
                         nargs='?', default='main')
+
+    default_trial_options = dict(
+        cue_type='arrow',
+        cue_validity='valid',
+        cue_dir='left',
+        target_loc='left',
+    )
 
     args = parser.parse_args()
     if args.command == 'maketrials':
