@@ -331,8 +331,9 @@ def main():
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('command', choices=['main', 'maketrials', 'singletrial'],
-                        nargs='?', default='main')
+    command_choices = ['main', 'maketrials', 'singletrial', 'instructions']
+    parser.add_argument('command', choices=command_choices,
+                        nargs='?', default=command_choices[0])
 
     default_trial_options = dict(
         cue_type='arrow',
@@ -358,5 +359,11 @@ if __name__ == '__main__':
 
         import pprint
         pprint.pprint(trial_data)
+    elif args.command == 'instructions':
+        experiment = Experiment()
+        screens = ['instructions', 'end_of_practice', 'break', 'timeout',
+                   'end_of_experiment']
+        for name in screens:
+            experiment.show_screen(name)
     else:
         main()
