@@ -268,7 +268,7 @@ class Experiment(object):
         return trial
 
     def show_screen(self, name):
-        if name in in self.texts:
+        if name in self.texts:
             self._show_screen(text=self.texts[name])
         else:
             raise NotImplementedError('%s is not a valid screen' % name)
