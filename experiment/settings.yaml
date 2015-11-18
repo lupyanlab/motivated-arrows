@@ -7,7 +7,7 @@ waits:  # in seconds
   fixation_duration: 1.0
   cue_duration: 0.2
   cue_onset_to_target_onset: 0.4
-  target_duration: 0.1
+  target_duration: 0.05
   response_window: 1.5
   iti: 1.0
 response_keys:
