@@ -413,6 +413,9 @@ def main():
 
     experiment.show_screen('end_of_experiment')
 
+    import webbrowser
+    webbrowser.open(experiment.survey_url.format(**participant))
+
 
 if __name__ == '__main__':
     import argparse
