@@ -14,13 +14,14 @@ load_all("motivatedarrows")
 library(dplyr)
 library(ggplot2)
 library(lme4)
+library(broom)
 
 motivated <- compile("experiment/data/") %>%
   clean %>% recode
 
 dev_mod <- lmer(rt ~ cue_c * validity_c * deviation + (1|subj_id),
                 data = motivated)
-summary(dev_mod)
+tidy(dev_mod, effects = "fixed")
 
 ggplot(motivated, aes(x = deviation, y = rt, color = cue_type, shape = cue_validity)) +
   geom_point(alpha = 0.6)
